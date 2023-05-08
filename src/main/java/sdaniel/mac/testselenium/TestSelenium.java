@@ -4,11 +4,17 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.support.ui.FluentWait;
+import org.openqa.selenium.support.ui.Wait;
+import org.openqa.selenium.support.ui.Select;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
+import java.time.Duration;
+import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
 public class TestSelenium {
 
     public static void main(String[] args) {
@@ -20,10 +26,11 @@ public class TestSelenium {
 
     @BeforeTest
     public void setup() {
-        // configurar el controlador de Selenium
+
+        // configurar  Selenium
         System.setProperty("webdriver.chrome.driver", "./drivers/chromedriver");
 
-        // inicializar el navegador
+        // inicializar navegador
         driver = new ChromeDriver();
     }
     
@@ -38,15 +45,28 @@ public class TestSelenium {
     @Test
     public void filtrarProductos() {
         // navegar a la página de WEH
+        driver.manage().timeouts().implicitlyWait(15, TimeUnit.SECONDS);
         driver.get("https://www.weh.com/products/quick-connectors/automation");
 
+        Wait<WebDriver> wait = new FluentWait<WebDriver>(driver)
+                .withTimeout(Duration.ofSeconds(10))
+                .pollingEvery(Duration.ofSeconds(1))
+                .ignoring(NoSuchElementException.class)
+                .ignoring(org.openqa.selenium.StaleElementReferenceException.class);
+
         // hacer clic en el checkbox Testing
-        WebElement checkboxTesting = driver.findElement(By.cssSelector("input[data-use-case='Testing']"));
+        WebElement checkboxTesting = driver.findElement(By.cssSelector("label[data-filter-value='Testing']"));
         checkboxTesting.click();
 
         // hacer clic en el checkbox Female threads
-        WebElement checkboxFemaleThreads = driver.findElement(By.cssSelector("input[data-connection-type='Female threads']"));
-        checkboxFemaleThreads.click();
+        var foo = wait.until(driver -> {
+            return driver.findElement(By.cssSelector("label[data-filter-value='Female threads']"));
+        });
+
+        foo.click();
+
+        WebElement viewMore = driver.findElement(By.cssSelector("#CartButton_036124a315644c4290a1c8a03b501fdd"));
+
         //2. Filtrar por Use Case Testing
         WebElement testingCheckBox = driver.findElement(By.xpath("//label[@for='cb-filter-testing']"));
         testingCheckBox.click();
@@ -60,11 +80,12 @@ public class TestSelenium {
         viewMoreButton.click();
         
         //5. Seleccionar los valores de los campos "Connects to" y "Operating Pressure PS"
-        WebElement connectsToDropDown = driver.findElement(By.xpath("//select[@id='connects-to']"));
-        connectsToDropDown.sendKeys("M10X1.0 Female Thread");
-        
-        WebElement operatingPressurePSDropDown = driver.findElement(By.xpath("//select[@id='operating-pressure-ps']"));
-        operatingPressurePSDropDown.sendKeys("50 bar");
+        WebElement connectsToDropDown = driver.findElement(By.id("//select[@for='VariantSelector_VARGRP62']"));
+        Select dropDown = new Select(connectsToDropDown);
+        dropDown.selectByVisibleText("M10X1.0 Female Thread");
+
+        WebElement operatingPressurePSDropDown = driver.findElement(By.id("//select[@for='VariantSelector_VARGRP65']"));        Select dropPDown = new Select(connectsToDropDown);
+        dropPDown.selectByVisibleText("50 bar");
         
         //6. Dar click en el botón Request Free Quote
         WebElement requestFreeQuoteButton = driver.findElement(By.xpath("//input[@value='Request Free Quote']"));
